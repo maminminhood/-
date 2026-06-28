@@ -1,0 +1,8 @@
+<resources>
+    <style name="Theme.BahnRail" parent="Theme.MaterialComponents.NoActionBar">
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:statusBarColor">#101312</item>
+        <item name="colorPrimary">#7A1F24</item>
+        <item name="colorAccent">#FF3B3B</item>
+    </style>
+</resources>

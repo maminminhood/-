@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>بن ریل - سرگرمی سفر</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.47.0/tabler-icons.min.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Vazirmatn', Tahoma, Arial, sans-serif;
+    background: #0a0c0b;
+    color: #e3e6e4;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+  }
+  #app-shell {
+    width: 100%;
+    max-width: 980px;
+    background: #101312;
+    border-radius: 18px;
+    overflow: hidden;
+    border: 0.5px solid #1f2624;
+  }
+  .focusable, .navtab { outline: none; }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px;
+    overflow: hidden; clip: rect(0,0,0,0);
+  }
+  @media (max-width: 700px) {
+    .grid4 { grid-template-columns: repeat(2, 1fr) !important; }
+    .grid2 { grid-template-columns: 1fr !important; }
+    .bento3 { grid-template-columns: 1fr !important; }
+    .route-cols { flex-direction: column !important; }
+  }
+</style>
+</head>
+<body>
+<div id="app-shell">
+  <h1 class="sr-only">بن ریل - سرگرمی سفر، مسیر تهران به مشهد</h1>
+  <div id="screen-host"></div>
+</div>
+
+<script>
+(function(){
+  var routeStops = [
+    {name:"تهران", time:"۲۰:۱۵", state:"done", note:"حرکت"},
+    {name:"گرمسار", time:"۲۲:۰۵", state:"done", note:"توقف ۲ دقیقه"},
+    {name:"سمنان", time:"۲۲:۵۷", state:"current", note:"۲۲ دقیقه دیگر"},
+    {name:"شاهرود", time:"۰۰:۲۰", state:"upcoming", note:""},
+    {name:"نقاب", time:"۰۱:۵۰", state:"upcoming", note:""},
+    {name:"نیشابور", time:"۰۴:۵۵", state:"upcoming", note:""},
+    {name:"مشهد", time:"۰۶:۴۵", state:"upcoming", note:"رسیدن"}
+  ];
+
+  var movies = [
+    {t:"چ", sub:"درام · ۸۸ دقیقه", img:"https://images.unsplash.com/photo-1542204165-65bf26472b9b?w=500&q=80", progress:62, desc:"روایتی از زندگی شهید چمران در دوران دفاع از کردستان."},
+    {t:"ابد و یک روز", sub:"درام اجتماعی · ۱۲۸ دقیقه", img:"https://images.unsplash.com/photo-1505686994434-e3cc5abf1330?w=500&q=80", progress:18, desc:"داستان خانواده‌ای در آستانه فروپاشی و تلاش برادر بزرگ‌تر برای نجات آن."},
+    {t:"متری شیش‌ونیم", sub:"جنایی · ۱۵۲ دقیقه", img:"https://images.unsplash.com/photo-1485846234645-a62644f84728?w=500&q=80", progress:0, desc:"تعقیب و گریز یک افسر پلیس مبارزه با مواد مخدر در تهران."},
+    {t:"باشو، غریبه کوچک", sub:"درام · ۸۹ دقیقه", img:"https://images.unsplash.com/photo-1500099817043-86d46000d58f?w=500&q=80", progress:0, desc:"کودکی جنگ‌زده که از جنوب به شمال ایران پناه می‌برد."}
+  ];
+  var recs = [
+    {t:"جدایی نادر از سیمین", sub:"درام خانوادگی", img:"https://images.unsplash.com/photo-1518621736915-f3b3c4fbf041?w=500&q=80", progress:0, desc:"دو خانواده که سرنوشت‌شان به دلیل یک تصمیم گره می‌خورد."},
+    {t:"خانه دوست کجاست؟", sub:"درام · کلاسیک", img:"https://images.unsplash.com/photo-1506157786151-b8491531f063?w=500&q=80", progress:0, desc:"جستجوی یک پسربچه در روستاهای شمال برای پیدا کردن خانه دوستش."},
+    {t:"بادکنک سفید", sub:"خانوادگی", img:"https://images.unsplash.com/photo-1517021897933-dc3a13150c87?w=500&q=80", progress:0, desc:"ماجراهای دختربچه‌ای در روز عید برای خریدن یک ماهی قرمز."},
+    {t:"درباره الی", sub:"درام معمایی", img:"https://images.unsplash.com/photo-1533928298208-3aa57054e6da?w=500&q=80", progress:0, desc:"سفر دسته‌جمعی به شمال که با ناپدید شدن یکی از مهمانان به راز تبدیل می‌شود."}
+  ];
+  var allMovies = movies.concat(recs);
+
+  var menuItems = [
+    {name:"چلوکباب کوبیده", price:"۱۸۵٬۰۰۰", desc:"دو سیخ کباب کوبیده با برنج ایرانی و گوجه گریل", icon:"ti-meat"},
+    {name:"جوجه کباب", price:"۲۱۰٬۰۰۰", desc:"سینه مرغ مزه‌دار شده با زعفران، همراه برنج", icon:"ti-meat"},
+    {name:"خوراک قیمه", price:"۱۴۵٬۰۰۰", desc:"خوراک قیمه با گوشت گوساله و سیب‌زمینی سرخ‌کرده", icon:"ti-soup"},
+    {name:"ساندویچ مرغ", price:"۹۵٬۰۰۰", desc:"ساندویچ مرغ گریل با سس مخصوص و سبزیجات", icon:"ti-sandwich"},
+    {name:"سالاد فصل", price:"۶۵٬۰۰۰", desc:"سبزیجات تازه، ذرت و سس مخصوص خانه", icon:"ti-salad"},
+    {name:"چای و قند پهلو", price:"۲۵٬۰۰۰", desc:"چای دم‌کشیده ایرانی با قند پهلو", icon:"ti-cup"},
+    {name:"چای سرد هل‌دار", price:"۴۰٬۰۰۰", desc:"چای سرد خانگی با طعم هل و لیمو", icon:"ti-glass"},
+    {name:"کیک خانگی", price:"۵۵٬۰۰۰", desc:"کیک یزدی تازه به همراه چای", icon:"ti-cookie"}
+  ];
+
+  var helpOptions = [
+    {label:"درخواست پذیرایی / آب و چای", icon:"ti-cup"},
+    {label:"نیاز به پزشک یا کمک‌های اولیه", icon:"ti-first-aid-kit"},
+    {label:"مشکل در دما یا تهویه کوپه", icon:"ti-temperature"},
+    {label:"مشکل فنی مانیتور یا صدا", icon:"ti-device-tv"},
+    {label:"سوال درباره ساعت رسیدن یا توقف‌ها", icon:"ti-clock"},
+    {label:"درخواست پتو یا بالش اضافه", icon:"ti-bed"}
+  ];
+
+  var state = { screen: 'home', activeMovie: null, helpSent: false };
+  var host = document.getElementById('screen-host');
+
+  function topBar(activeTab){
+    var tabs = [
+      {id:'home', label:'خانه', icon:'ti-home'},
+      {id:'movies', label:'فیلم و سریال', icon:'ti-movie'},
+      {id:'route', label:'مسیر سفر', icon:'ti-map'},
+      {id:'menu', label:'منوی بوفه', icon:'ti-tools-kitchen-2'},
+      {id:'help', label:'درخواست کمک', icon:'ti-headset'}
+    ];
+    var html = '<div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">';
+    tabs.forEach(function(t){
+      var active = t.id === activeTab;
+      html += '<button class="navtab" data-go="'+t.id+'" style="all:unset;cursor:pointer;font-size:14px;padding:9px 20px;border-radius:8px;color:'+(active?'#fff':'#9aa39e')+';background:'+(active?'#7a1f24':'transparent')+';font-weight:500;display:flex;align-items:center;gap:6px;font-family:inherit">'+
+        '<i class="ti '+t.icon+'" style="font-size:15px" aria-hidden="true"></i>'+t.label+'</button>';
+    });
+    html += '</div>';
+    return html;
+  }
+
+  function headerBar(){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:18px 28px 0;flex-wrap:wrap;gap:10px">'+
+      '<div style="display:flex;align-items:center;gap:10px">'+
+        '<div style="width:26px;height:26px;border:2px solid #ff3b3b;border-radius:5px;display:flex;align-items:center;justify-content:center">'+
+          '<span style="font-size:12px;font-weight:500;color:#ff3b3b;letter-spacing:0.5px">بر</span></div>'+
+        '<span style="font-size:13px;color:#9aa39e;font-weight:500;letter-spacing:0.3px">بن ریل · سرگرمی سفر</span></div>'+
+      '<div style="display:flex;align-items:center;gap:18px;font-size:13px;color:#9aa39e">'+
+        '<span style="display:flex;align-items:center;gap:5px"><i class="ti ti-wifi" style="font-size:15px;color:#5fd9ab" aria-hidden="true"></i>وای‌فای متصل</span>'+
+        '<span>۲۲:۳۵</span></div></div>';
+  }
+
+  function footerBar(){
+    return '<div style="margin-top:22px;padding:14px 20px;border-top:0.5px solid #1f2624;display:flex;justify-content:space-between;align-items:center;background:#0c0f0e;flex-wrap:wrap;gap:8px">'+
+      '<div style="font-size:12px;color:#5f6b66;display:flex;gap:6px;align-items:center"><i class="ti ti-language" style="font-size:14px" aria-hidden="true"></i>فارسی</div>'+
+      '<div style="font-size:12px;color:#5f6b66;display:flex;gap:16px"><span>لمس کنید تا انتخاب شود</span></div></div>';
+  }
+
+  function movieCard(item, idx, withProgress){
+    return '<div class="focusable card-item" tabindex="-1" data-movie="'+idx+'" style="cursor:pointer;border-radius:12px;outline:none">'+
+      '<div style="aspect-ratio:16/10;border-radius:12px;background-image:url(\''+item.img+'\');background-size:cover;background-position:center;position:relative;overflow:hidden">'+
+        '<div style="position:absolute;inset:0;background:linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 55%)"></div>'+
+        '<i class="ti ti-player-play-filled" style="position:absolute;bottom:8px;left:8px;font-size:16px;color:rgba(255,255,255,0.85)" aria-hidden="true"></i>'+
+        (withProgress && item.progress ? '<div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,0.2)"><div style="height:100%;width:'+item.progress+'%;background:#ff3b3b"></div></div>' : '')+
+      '</div>'+
+      '<div style="font-size:13px;color:#e3e6e4;margin-top:9px;text-align:right;font-weight:500">'+item.t+'</div>'+
+      '<div style="font-size:11px;color:#6b756f;margin-top:2px;text-align:right">'+item.sub+'</div></div>';
+  }
+
+  function renderHome(){
+    var html = headerBar();
+    html += '<div style="padding:18px 20px 0">';
+    html += topBar('home');
+
+    html += '<div class="bento3" style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:12px;margin-bottom:24px">';
+    html += '<div class="focusable" tabindex="-1" data-go="route" style="cursor:pointer;background:#171c1a;border-radius:14px;padding:16px 18px;border:0.5px solid #232a27;outline:none">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'+
+      '<span style="font-size:12px;color:#7a8580">مسیر فعلی</span>'+
+      '<span style="font-size:11px;color:#5fd9ab;display:flex;align-items:center;gap:4px"><i class="ti ti-circle-filled" style="font-size:7px" aria-hidden="true"></i>در حرکت</span></div>'+
+      '<div style="display:flex;align-items:center;justify-content:space-between">'+
+        '<div style="text-align:center"><div style="font-size:16px;font-weight:500;color:#fff">تهران</div><div style="font-size:11px;color:#5f6b66">حرکت ۲۰:۱۵</div></div>'+
+        '<div style="flex:1;height:2px;background:#2a3330;margin:0 10px;position:relative;top:-10px"><div style="position:absolute;right:0;top:-3px;width:8px;height:8px;border-radius:50%;background:#ff3b3b"></div></div>'+
+        '<div style="text-align:center"><div style="font-size:16px;font-weight:500;color:#fff">مشهد</div><div style="font-size:11px;color:#5f6b66">رسیدن ۰۶:۴۵</div></div></div>'+
+      '<div style="margin-top:10px;font-size:11px;color:#7a8580">ایستگاه بعدی: سمنان · ۲۲ دقیقه دیگر</div></div>';
+    html += '<div style="background:#171c1a;border-radius:14px;padding:16px 18px;border:0.5px solid #232a27">'+
+      '<div style="font-size:12px;color:#7a8580;margin-bottom:10px">سرعت فعلی</div>'+
+      '<div style="font-size:26px;font-weight:500;color:#fff">۱۴۰ <span style="font-size:13px;color:#7a8580;font-weight:400">کیلومتر/ساعت</span></div>'+
+      '<div style="font-size:11px;color:#5f6b66;margin-top:4px">دمای بیرون ۱۲ درجه</div></div>';
+    html += '<div style="background:#171c1a;border-radius:14px;padding:16px 18px;border:0.5px solid #232a27">'+
+      '<div style="font-size:12px;color:#7a8580;margin-bottom:10px">صندلی شما</div>'+
+      '<div style="font-size:18px;color:#fff;font-weight:500">کوپه ۴ · ۱۲</div>'+
+      '<div style="font-size:11px;color:#5f6b66;margin-top:4px">واگن درجه ۱</div></div>';
+    html += '</div>';
+
+    html += '<div style="font-size:13px;color:#9aa39e;margin-bottom:12px;display:flex;align-items:center;gap:8px"><i class="ti ti-player-play" style="font-size:14px" aria-hidden="true"></i>ادامه تماشا</div>';
+    html += '<div class="grid4" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px">';
+    movies.forEach(function(m,i){ html += movieCard(m, i, true); });
+    html += '</div>';
+
+    html += '<div style="font-size:13px;color:#9aa39e;margin-bottom:12px;display:flex;align-items:center;gap:8px"><i class="ti ti-sparkles" style="font-size:14px" aria-hidden="true"></i>پیشنهاد برای این مسیر</div>';
+    html += '<div class="grid4" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:8px">';
+    recs.forEach(function(m,i){ html += movieCard(m, i+4, false); });
+    html += '</div></div>';
+    html += footerBar();
+    return html;
+  }
+
+  function renderMovies(){
+    var html = headerBar();
+    html += '<div style="padding:18px 20px 0">';
+    html += topBar('movies');
+    html += '<div style="font-size:13px;color:#9aa39e;margin-bottom:12px">همه فیلم‌ها</div>';
+    html += '<div class="grid4" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:8px">';
+    allMovies.forEach(function(m,i){ html += movieCard(m, i, m.progress > 0); });
+    html += '</div></div>';
+    html += footerBar();
+    return html;
+  }
+
+  function renderPlayer(idx){
+    var m = allMovies[idx];
+    var html = '<div style="position:relative;height:280px;background:#000;border-radius:0;overflow:hidden">'+
+      '<img src="'+m.img+'" style="width:100%;height:100%;object-fit:cover;filter:brightness(0.5)" alt=""/>'+
+      '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">'+
+        '<div class="focusable" tabindex="-1" data-action="toggleplay" style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;cursor:pointer;outline:none">'+
+          '<i class="ti ti-player-play-filled" style="font-size:26px;color:#fff" aria-hidden="true"></i></div></div>'+
+      '<div class="focusable" tabindex="-1" data-go="back" style="position:absolute;top:16px;right:24px;display:flex;align-items:center;gap:6px;color:#e3e6e4;font-size:13px;cursor:pointer;outline:none">'+
+        '<i class="ti ti-arrow-right" style="font-size:16px" aria-hidden="true"></i>بازگشت</div>'+
+      '</div>';
+    html += '<div style="padding:20px 24px">';
+    html += '<div style="font-size:20px;color:#fff;font-weight:500;margin-bottom:6px">'+m.t+'</div>';
+    html += '<div style="font-size:13px;color:#7a8580;margin-bottom:14px">'+m.sub+'</div>';
+    html += '<div style="font-size:14px;color:#aab3ae;line-height:1.8;margin-bottom:20px">'+m.desc+'</div>';
+    html += '<div style="height:4px;background:#232a27;border-radius:2px;margin-bottom:8px"><div style="height:100%;width:'+(m.progress||4)+'%;background:#ff3b3b;border-radius:2px"></div></div>';
+    html += '<div style="display:flex;justify-content:space-between;font-size:11px;color:#5f6b66">'+
+      '<span>'+(m.progress ? 'ادامه از دقیقه ' + Math.round(m.progress*0.88) : '۰۰:۰۰') +'</span><span>پایان</span></div>';
+    html += '</div>';
+    html += footerBar();
+    return html;
+  }
+
+  function renderRoute(){
+    var html = headerBar();
+    html += '<div style="padding:18px 20px 0">';
+    html += topBar('route');
+    html += '<div class="route-cols" style="display:flex;gap:24px">';
+
+    html += '<div style="flex:1">';
+    routeStops.forEach(function(s, i){
+      var isLast = i === routeStops.length - 1;
+      var dotColor = s.state === 'current' ? '#ff3b3b' : (s.state === 'done' ? '#5f6b66' : '#2a3330');
+      var textColor = s.state === 'current' ? '#fff' : (s.state === 'done' ? '#6b756f' : '#9aa39e');
+      html += '<div style="display:flex;align-items:flex-start;gap:14px">';
+      html += '<div style="display:flex;flex-direction:column;align-items:center">'+
+        '<div style="width:'+(s.state==='current'?'14px':'10px')+';height:'+(s.state==='current'?'14px':'10px')+';border-radius:50%;background:'+dotColor+(s.state==='current'?';box-shadow:0 0 0 3px rgba(255,59,59,0.25)':'')+'"></div>'+
+        (!isLast ? '<div style="width:2px;flex:1;min-height:34px;background:'+(s.state==='done'?'#3a4440':'#1f2624')+'"></div>' : '')+
+        '</div>';
+      html += '<div style="padding-bottom:'+(isLast?'0':'22px')+'">'+
+        '<div style="font-size:15px;color:'+textColor+';font-weight:'+(s.state==='current'?'500':'400')+'">'+s.name+'</div>'+
+        '<div style="font-size:12px;color:#5f6b66;margin-top:2px">'+s.time+(s.note ? ' · '+s.note : '')+'</div></div>';
+      html += '</div>';
+    });
+    html += '</div>';
+
+    html += '<div style="flex:1.3">';
+    html += '<img src="https://images.unsplash.com/photo-1474487548417-781cb71495f3?w=700&q=80" style="width:100%;height:200px;object-fit:cover;border-radius:14px;margin-bottom:14px" alt=""/>';
+    html += '<div class="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
+    html += '<div style="background:#171c1a;border-radius:14px;padding:14px 16px;border:0.5px solid #232a27"><div style="font-size:12px;color:#7a8580;margin-bottom:6px">مسافت کل</div><div style="font-size:18px;color:#fff;font-weight:500">۹۲۶ کیلومتر</div></div>';
+    html += '<div style="background:#171c1a;border-radius:14px;padding:14px 16px;border:0.5px solid #232a27"><div style="font-size:12px;color:#7a8580;margin-bottom:6px">مدت کل سفر</div><div style="font-size:18px;color:#fff;font-weight:500">۱۰ ساعت و ۳۰ دقیقه</div></div>';
+    html += '</div>';
+    html += '<div style="margin-top:12px;background:#171c1a;border-radius:14px;padding:14px 16px;border:0.5px solid #232a27">'+
+      '<div style="font-size:12px;color:#7a8580;margin-bottom:6px">قطار</div>'+
+      '<div style="font-size:15px;color:#fff;font-weight:500">قطار سروش بن ریل · کوپه چهارتخته</div></div>';
+    html += '</div>';
+
+    html += '</div></div>';
+    html += footerBar();
+    return html;
+  }
+
+  function renderMenu(){
+    var html = headerBar();
+    html += '<div style="padding:18px 20px 0">';
+    html += topBar('menu');
+    html += '<div style="font-size:13px;color:#9aa39e;margin-bottom:14px">سفارش از بوفه قطار · تحویل به کوپه شما</div>';
+    html += '<div class="grid2" style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:8px">';
+    menuItems.forEach(function(item, i){
+      html += '<div class="focusable" tabindex="-1" data-menuitem="'+i+'" style="cursor:pointer;outline:none;background:#171c1a;border-radius:14px;padding:14px 16px;border:0.5px solid #232a27;display:flex;justify-content:space-between;align-items:flex-start;gap:12px">'+
+        '<div style="display:flex;gap:12px;align-items:flex-start">'+
+        '<div style="width:38px;height:38px;border-radius:10px;background:#232a27;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti '+item.icon+'" style="font-size:18px;color:#9aa39e" aria-hidden="true"></i></div>'+
+        '<div><div style="font-size:14px;color:#e3e6e4;font-weight:500">'+item.name+'</div>'+
+        '<div style="font-size:11px;color:#6b756f;margin-top:3px;line-height:1.6">'+item.desc+'</div></div></div>'+
+        '<div style="font-size:13px;color:#ff8585;font-weight:500;white-space:nowrap">'+item.price+' تومان</div>'+
+        '</div>';
+    });
+    html += '</div></div>';
+    html += footerBar();
+    return html;
+  }
+
+  function renderHelp(){
+    var html = headerBar();
+    html += '<div style="padding:18px 20px 0">';
+    html += topBar('help');
+    html += '<div class="route-cols" style="display:flex;gap:24px">';
+
+    html += '<div style="flex:1">';
+    html += '<div style="font-size:13px;color:#9aa39e;margin-bottom:14px">چه کمکی نیاز دارید؟</div>';
+    helpOptions.forEach(function(opt, i){
+      var sent = state.helpSent === i;
+      html += '<div class="focusable" tabindex="-1" data-help="'+i+'" style="cursor:pointer;outline:none;display:flex;align-items:center;gap:12px;padding:13px 16px;border-radius:12px;border:0.5px solid '+(sent?'#3a5f4a':'#232a27')+';background:'+(sent?'#16201a':'#171c1a')+';margin-bottom:10px">'+
+        '<i class="ti '+opt.icon+'" style="font-size:18px;color:'+(sent?'#5fd9ab':'#9aa39e')+'" aria-hidden="true"></i>'+
+        '<span style="font-size:14px;color:#e3e6e4;flex:1">'+opt.label+'</span>'+
+        (sent ? '<i class="ti ti-check" style="font-size:16px;color:#5fd9ab" aria-hidden="true"></i>' : '<i class="ti ti-chevron-left" style="font-size:14px;color:#5f6b66" aria-hidden="true"></i>')+
+        '</div>';
+    });
+    html += '</div>';
+
+    html += '<div style="flex:0.85">';
+    html += '<div style="background:#171c1a;border-radius:14px;padding:18px;border:0.5px solid #232a27;text-align:center">';
+    html += '<div style="width:56px;height:56px;border-radius:50%;background:#232a27;display:flex;align-items:center;justify-content:center;margin:0 auto 12px"><i class="ti ti-user-star" style="font-size:26px;color:#9aa39e" aria-hidden="true"></i></div>';
+    html += '<div style="font-size:14px;color:#e3e6e4;font-weight:500;margin-bottom:4px">مسئول واگن ۴</div>';
+    html += '<div style="font-size:12px;color:#6b756f;margin-bottom:14px">درخواست شما مستقیم به تبلت ایشان ارسال می‌شود</div>';
+    if(state.helpSent !== false){
+      html += '<div style="font-size:12px;color:#5fd9ab;background:#16201a;border-radius:8px;padding:10px;border:0.5px solid #2a4a3a">درخواست ارسال شد. به‌زودی به کوپه شما می‌آیند.</div>';
+    } else {
+      html += '<div style="font-size:12px;color:#6b756f">یک گزینه را از کنار انتخاب کنید</div>';
+    }
+    html += '</div></div>';
+
+    html += '</div></div>';
+    html += footerBar();
+    return html;
+  }
+
+  function render(){
+    var html;
+    if(state.screen === 'home') html = renderHome();
+    else if(state.screen === 'movies') html = renderMovies();
+    else if(state.screen === 'player') html = renderPlayer(state.activeMovie);
+    else if(state.screen === 'route') html = renderRoute();
+    else if(state.screen === 'menu') html = renderMenu();
+    else if(state.screen === 'help') html = renderHelp();
+    host.innerHTML = html;
+    bindClicks();
+  }
+
+  function bindClicks(){
+    Array.from(host.querySelectorAll('[data-go]')).forEach(function(el){
+      el.addEventListener('click', function(){
+        var target = el.getAttribute('data-go');
+        if(target === 'back'){ state.screen = 'home'; }
+        else { state.screen = target; }
+        render();
+      });
+    });
+    Array.from(host.querySelectorAll('[data-movie]')).forEach(function(el){
+      el.addEventListener('click', function(){
+        state.activeMovie = parseInt(el.getAttribute('data-movie'), 10);
+        state.screen = 'player';
+        render();
+      });
+    });
+    Array.from(host.querySelectorAll('[data-menuitem]')).forEach(function(el){
+      el.addEventListener('click', function(){
+        el.style.borderColor = '#ff3b3b';
+        setTimeout(function(){ el.style.borderColor = '#232a27'; }, 600);
+      });
+    });
+    Array.from(host.querySelectorAll('[data-help]')).forEach(function(el){
+      el.addEventListener('click', function(){
+        state.helpSent = parseInt(el.getAttribute('data-help'), 10);
+        render();
+      });
+    });
+    var playBtn = host.querySelector('[data-action="toggleplay"]');
+    if(playBtn){
+      playBtn.addEventListener('click', function(){
+        var icon = playBtn.querySelector('i');
+        if(icon.classList.contains('ti-player-play-filled')){
+          icon.classList.remove('ti-player-play-filled');
+          icon.classList.add('ti-player-pause-filled');
+        } else {
+          icon.classList.remove('ti-player-pause-filled');
+          icon.classList.add('ti-player-play-filled');
+        }
+      });
+    }
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
